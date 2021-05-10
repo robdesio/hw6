@@ -4,6 +4,9 @@ let csv = require('neat-csv')
 // allows us to read files from disk
 let fs = require('fs')
 
+// allows us to use fetch
+let fetch = require('node-fetch')
+
 // defines a lambda function
 exports.handler = async function(event) {
   // write the event object to the back-end console
@@ -21,6 +24,36 @@ exports.handler = async function(event) {
   // 🔥 hw6: your recipe and code starts here!
   let year = event.queryStringParameters.year
   let genre = event.queryStringParameters.genre
+
+  // define URL for movie data
+  let url = `/.netlify/functions/movies?year=${year}&genre=${genre}`
+
+  // fetch URL, wait for response, store in memory
+  let response = await fetch(url)
+
+  // format response as json, wait for response
+  let json = await response.json()
+
+  // write json-formatted data to back-end console
+ //console.log(json)
+
+  // create array to be returned by API
+  let movieResults = []
+
+  // Loop through movie data
+  for (let i = 0 ; i < json.length ; i++) {
+    // store each item as a result
+    let result = json[i]
+    if (result.genres != `\\N` && result.runtimeMinutes != `\\N`) {
+      let movie = {
+        title: result.primaryTitle,
+        year: result.startYear,
+        genre: result.genres
+      }
+      // Push result into the movieResults array
+      movieResults.push(movie)
+    }
+  }
   
   if (year == undefined || genre == undefined) {
     return {
