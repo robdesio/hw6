@@ -16,56 +16,54 @@ exports.handler = async function(event) {
   let moviesFromCsv = await csv(moviesFile)
 
   // write the movies to the back-end console, check it out
-  //console.log(moviesFromCsv)
+  console.log(moviesFromCsv)
 
   // 🔥 hw6: your recipe and code starts here!
   let year = event.queryStringParameters.year
   let genre = event.queryStringParameters.genre
 
-  // create array to be returned by API
-  let movieResultsToReturn = {
-    title: [],
-    yearReleased: [],
-    genres: []
-  }
-
-  // Loop through movie data
-  for (let i = 0 ; i < moviesFromCsv.length ; i++) {
-    // store each item as a result
-    let result = moviesFromCsv[i]
-    if (result.genres != `\\N` && result.runtimeMinutes != `\\N`) {
-      let movieToPush = {
-        title: result.primaryTitle,
-        year: result.startYear,
-        genre: result.genres
-      }
-      // Push result into the movieResults array
-      movieResultsToReturn.title.push(movieToPush.title)
-      movieResultsToReturn.yearReleased.push(movieToPush.year)
-      movieResultsToReturn.genres.push(movieToPush.genre)
-    }
-  }
-  
+     
+  // Check for year and genre, return error if either is undefined
   if (year == undefined || genre == undefined) {
     return {
       statusCode: 200, // https://developer.mozilla.org/en-US/docs/Web/HTTP/Status
-      body: `Nope!` // a string of data
+      body: `Tell me what year and genre you want to see!` // a string of data
     }
   }
+  // define array to hold results of call
   else {
     let movieResultsToReturn = {
       numResults: 0,
       movies: []
     }
-
+    // loop through data
     for (let i=0; i < moviesFromCsv.length; i++) {
+      let result = moviesFromCsv[i]
 
+      // create constraints for year, genre
+      let genreCheck = `${result.genres}`
+      let yearCheck = `${result.startYear}`
+
+     // check to ensure genre, year match user input, run time is not \\N. Do not need additional check for genre = \\N with first constraint
+      if (genreCheck.includes(`${genre}`) == true && yearCheck.includes(`${year}`) && result.runtimeMinutes != `\\N`) {
+        let movieToPush = {
+         title: result.primaryTitle,
+          year: result.startYear,
+          genre: result.genres
+      }
+
+      // Push result into the movieResults array
+      movieResultsToReturn.movies.push(movieToPush)
+      // add one to numResults
+      movieResultsToReturn.numResults = movieResultsToReturn.numResults + 1
+  
     }
+  }
 
     // a lambda function returns a status code and a string of data
     return {
       statusCode: 200, // https://developer.mozilla.org/en-US/docs/Web/HTTP/Status
-      body: `Hello from the back-end!` // a string of data
+      body: JSON.stringify(movieResultsToReturn) // a string of data
     }
   }
 }
